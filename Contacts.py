@@ -60,7 +60,7 @@ def collect_and_sort_contacts():
         sorted_contacts = sorted(collected_contacts, key=lambda x: x.get("lastname", "").lower())
         
         # Display organized contacts
-        print("Organized Contacts:")
+        print("Organized Contacts:",sorted_contacts)
         for contact in sorted_contacts:
             print(contact)
         
