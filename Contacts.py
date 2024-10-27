@@ -1,4 +1,5 @@
 import requests
+import Tools
 
 # Define the API key and endpoint URL
 api_key = "pat-na1-3c7b0af9-bb66-40e7-a256-ce4c5eb27e81"  # actual HubSpot API key
@@ -59,11 +60,6 @@ def collect_and_sort_contacts():
         # Sort contacts alphabetically by 'lastname'
         sorted_contacts = sorted(collected_contacts, key=lambda x: x.get("lastname", "").lower())
         
-        # Display organized contacts
-        print("Organized Contacts:",sorted_contacts)
-        for contact in sorted_contacts:
-            print(contact)
-        
         return sorted_contacts
 
     except requests.exceptions.RequestException as e:
@@ -72,3 +68,14 @@ def collect_and_sort_contacts():
 
 # Execute the function to collect and sort contacts
 sorted_contacts = collect_and_sort_contacts()
+print(sorted_contacts)
+
+for row in sorted_contacts:
+        if 'raw_email' in row:
+            row['raw_email'] = Tools.extract_emails(row['raw_email'])[0]
+        if 'country' in row:
+            country = Tools.get_country_from_city(row['country'])[0]
+            row['country'] = country
+            row['phone'] = Tools.format_phone_number(row['phone'],Tools.get_country_code_from_city(country))
+
+print(sorted_contacts)

@@ -24,8 +24,13 @@ def get_country_code_from_city(city_name):
     
     if location:
         # Extract country name from the location
-        country_name = location.address.split(",")[-1].strip()
         
+        country_name = location.address.split(",")[-1].strip()
+
+        if "/" in country_name:
+            country_name = country_name.split("/")[1].strip()
+        
+    
         # Use pycountry to find the ISO country code
         country = pycountry.countries.get(name=country_name)
         
@@ -47,18 +52,26 @@ def format_phone_number(phone, country_code):
     Returns:
         str: The formatted phone number or an error message if invalid.
     """
+    # Clean the phone number by removing any non-numeric characters
+    phone = ''.join(filter(str.isdigit, phone))
+
+    # If the phone starts with '00', replace it with the country code
+    if phone.startswith("00"):
+        phone = phone[2:]
+
+    if phone.startswith("0"):
+        phone = phone[1:]
+    
+
+    # Prepend the country code if not already present
     try:
-        # Parse the phone number with the specified country code region
         parsed_number = phonenumbers.parse(phone, country_code)
+
+        code = str(parsed_number).split(" ")[2].strip()
         
-        # Check if the number is valid
-        if not phonenumbers.is_valid_number(parsed_number):
-            return "Invalid phone number"
+        custom_format= f"(+{code}) {phone}"
 
-        # Format the number in international format
-        international_format = phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
-
-        return international_format
+        return custom_format
 
     except phonenumbers.phonenumberutil.NumberParseException:
         return "Could not parse the phone number"
@@ -131,6 +144,8 @@ def get_country_from_city(city_name_input):
 
 
 
+
+"""
 # Example usage with a list of city names
 cities = [
     "Winchester",
@@ -154,7 +169,7 @@ print("Extracted Emails from list:", emails)
 
 
 # Example usage with a single city string
-single_city = "Dublin"
+single_city = "Limerick"
 country = get_country_from_city(single_city)
 print(f"The country for {single_city} is:", country)
 
@@ -168,12 +183,11 @@ country_code = get_country_code_from_city(single_city)
 print(f"The country code for {single_city} is: {country_code}")
 
 # Example usage
-phone_number = "1161604327"  # An English-style number without country code
+phone_number = "1-142-256-130"  # An English-style number without country code
 formatted_number = format_phone_number(phone_number, country_code)
 print("Formatted Phone Number:", formatted_number)
 
 
-"""
 {'firstname': 'Wade', 'lastname': 'Thompson', 'raw_email': 'Wade <wade_thompson931319772@zorer.org> Contact Info.', 'country': 'Limerick', 'phone': '1-142-256-130', 'technical_test___create_date': '2021-08-29', 'industry': 'Animal feeds', 'address': 'West Grove, 8089', 'hs_object_id': '438151'}
 {'firstname': 'Winnie', 'lastname': 'Walter', 'raw_email': 'Winnie <winnie_walter538064895@sheye.org> Contact Info.', 'country': 'Dublin', 'phone': '1-161-604-327', 'technical_test___create_date': '2021-02-10', 'industry': 'Dairy products', 'address': 'Chester      Crossroad, 7070', 'hs_object_id': '419852'}
 {'firstname': 'Winnie', 'lastname': 'Walter', 'raw_email': 'Winnie <winnie_walter1068546463@naiker.biz> Contact Info.', 'country': 'Ireland', 'phone': '2-567-604-285', 'technical_test___create_date': '2021-10-10', 'industry': 'Dairy products', 'address': 'Collins  Lane, 3994', 'hs_object_id': '437452'}
