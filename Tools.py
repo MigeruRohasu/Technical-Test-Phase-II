@@ -1,10 +1,99 @@
 from geopy.geocoders import Nominatim
 import re
 
+import pandas as pd
+from datetime import datetime
+
 import phonenumbers
 from phonenumbers import geocoder, carrier
 
 import pycountry
+
+def merge_duplicates(df):
+    """
+    Merges duplicate contact records in a DataFrame based on email or full name, keeping the most recent record
+    and merging data from older records according to specified criteria.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing contact records with columns 'hs_object_id', "Full Name"('firstname'+'lastname'),
+                           'raw_email', 'address', 'industry', and  'technical_test___create_date'.
+
+    Returns:
+        pd.DataFrame: A DataFrame with duplicates merged and only the most recent records retained.
+    """
+
+    # Ensure the create date is in datetime format for comparison
+    df["technical_test___create_date"] = pd.to_datetime(df["technical_test___create_date"], format="%Y-%m-%d")
+
+
+    # First Step: Merge duplicates based on Full Name
+    df = merge_by_key(df, "Full Name")
+
+    # Second Step: Merge duplicates based on Email
+    df = merge_by_key(df, "Email")
+
+    return df
+
+
+
+def merge_by_key(df, key):
+    """
+    Helper function to merge duplicates based on a specified key.
+
+    Args:
+        df (pd.DataFrame): DataFrame to be processed.
+        key (str): The column name to use as the grouping key (e.g., "Full Name" or "Email").
+
+    Returns:
+        pd.DataFrame: A DataFrame with duplicates merged based on the specified key.
+    """
+
+    # Sort by create date in descending order so the most recent record comes first
+    df = df.sort_values(by="technical_test___create_date", ascending=False)
+
+    if "Full Name" in key:
+        # Create a unique identifier based on email and full name
+        df["unique_id"] = (df['firstname']+df['lastname']).fillna("")
+        # Group by the specified key to detect duplicates
+        grouped = df.groupby("unique_id")
+    elif "Email" in key:
+        # Group by the specified key to detect duplicates
+        grouped = df.groupby('raw_email')
+    
+
+    # Initialize an empty list to store merged records
+    merged_records = []
+
+    # Process each group of duplicates
+    for _, group in grouped:
+        # Start with the most recent record (first in sorted group)
+        primary_record = group.iloc[0].copy()
+
+        # Collect unique industries
+        industry_set = set(primary_record["industry"].split(";")) if pd.notna(primary_record["industry"]) else set()
+
+        # Iterate through other records in the group (older records)
+        for _, row in group.iloc[1:].iterrows():
+            # Fill missing fields in the primary record
+            for column in ["address", "industry"]:
+                if pd.isna(primary_record[column]) and pd.notna(row[column]):
+                    primary_record[column] = row[column]
+
+            # Concatenate unique industry values
+            if pd.notna(row["industry"]):
+                industry_set.update(row["industry"].split(";"))
+
+        # Format the industry field as required
+        primary_record["industry"] = ";" + ";".join(sorted(industry_set)).strip(";")
+
+        # Append the processed primary record to the list of merged records
+        merged_records.append(primary_record)
+
+    # Create a DataFrame from the merged records list
+    merged_df = pd.DataFrame(merged_records)
+
+    return merged_df
+
 
 def get_country_code_from_city(city_name):
     """
@@ -141,3 +230,26 @@ def get_country_from_city(city_name_input):
             extracted_countries.append("Country not found")
         
     return extracted_countries
+
+def car(op):
+    if op == 0 :
+        print()
+        print("-------─────▄▌▐▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▌ ---------------------------------")
+        print("-------───▄▄██▌█ ..Data Imported..      ---------------------------------")
+        print("-------▄▄▄▌▐██▌█ ................       ---------------------------------")
+        print("-------███████▌█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌ ---------------------------------")
+        print("-------▀(@)▀▀▀▀▀▀▀(@)(@)▀▀▀▀▀▀▀▀▀▀▀▀(@)▀---------------------------------")
+        print()
+    elif op == 1:
+        print()
+        print("--------------------  ▌▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▐▄─────-------")
+        print("---------------------     ....Data Sent...  █▌██▄▄───-------")
+        print("---------------------       ...........     █▌██ ▐▄▄▄-------")
+        print("--------------------- ▌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█▌███████-------")
+        print("--------------------- ▀(@)▀▀▀▀▀▀▀▀▀▀▀▀(@)(@)▀▀▀▀▀▀▀(@)▀-------")
+        print()
+    elif op == 2:
+        print("\n" + "#" * 60)
+        print("#" + " " * 20 + "Processing Information..." + " " * 19 + "#")
+        print("#" + " " * 16 + "Please wait while we process the data." + " " * 15 + "#")
+        print("#" * 60 + "\n")

@@ -211,7 +211,7 @@ class HubSpotDataPipeline:
 
 
 # Initialize the HubSpot data pipeline with API key
-pipeline = HubSpotDataPipeline(api_key_to="your_api_key_here",api_key_from="your_api_key_here")
+pipeline = HubSpotDataPipeline(api_key_to="HUBSPOT_API_KEY",api_key_from="HUBSPOT_API_KEY")
 
 # Extract, transform, and load data
 data_list = pipeline.extract()
