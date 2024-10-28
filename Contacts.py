@@ -221,7 +221,10 @@ data_frame = pd.DataFrame(data_list)
 data_frame.to_csv("contacts_data_collect.csv", index=False)
 print("Data saved to contacts_data_collect.csv")
 
+
 Tools.car(0)  # Indicate data import with car animation
+
+Tools.car(2)  # Indicate data transform
 
 # Transform the data and save the transformed DataFrame
 data_frame = pipeline.transform(data_list)
