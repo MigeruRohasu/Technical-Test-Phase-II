@@ -5,14 +5,14 @@ This project implements a data pipeline to automate the extraction, transformati
 
 ## Requirements
 
-pandas
-requests
-hubspot-api-client
-phonenumbers
-matplotlib
-geopy
-pycountry
-
+- pandas
+- requests
+- hubspot-api-client
+- phonenumbers
+- matplotlib
+- geopy
+- pycountry
+s
 ## Overview
 
 The pipeline handles:
