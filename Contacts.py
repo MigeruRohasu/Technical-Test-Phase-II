@@ -26,7 +26,7 @@ data_frame = pipeline.transform(data_list)
 data_frame.to_csv("contacts_data_result.csv", index=False)
 print("Data saved to contacts_data_result.csv")
 
-# Load data from a CSV file into a DataFrame
+# Load data from a CSV file into a DataFramea
 # data_frame = pd.read_csv("contacts_data_result.csv")
 
 # Load the transformed data into HubSpot

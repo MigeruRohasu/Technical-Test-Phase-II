@@ -304,6 +304,7 @@ class HubSpotDataPipeline:
             "Content-Type": "application/json"
         }
         self.endpoint = "https://api.hubapi.com/crm/v3/objects/contacts/search"
+        self.location_cache = {}
 
     def extract(self):
         """
@@ -384,38 +385,49 @@ class HubSpotDataPipeline:
         # Step 1: Extract and clean emails
         for row in sorted_contacts:
             if 'raw_email' in row and row['raw_email']:
+                # Clean the email field using a function from Tools
                 row['raw_email'] = Tools.extract_emails(row['raw_email'])
                 
-        # Step 2: Convert to DataFrame and merge duplicates
+        # Step 2: Convert the list to a DataFrame and merge duplicate entries
         transformed_df = pd.DataFrame(sorted_contacts)
         transformed_df = Tools.merge_duplicates(transformed_df)
 
-        # Step 3: Further transformations for city-country, country code, and phone formatting
+        # Step 3: Perform further transformations for city-country, country code, and phone formatting
         for index, row in transformed_df.iterrows():
-            # Set city and transform country/country code
+            # Check if the country field is not empty
             if pd.notna(row['country']):
-                city = row['country']
+                city = row['country']  # Assume 'country' field initially contains the city name
                 transformed_df.at[index, 'city'] = city
-                country = Tools.get_country_from_city(city) if city else None
-                transformed_df.at[index, 'country'] = country if country else "Country not found"
+
+                # Check if the city is already in the cache
+                if city in self.location_cache:
+                    # If in cache, retrieve country and country code from the cache
+                    country, country_code = self.location_cache[city]
+                else:
+                    # If not in cache, perform lookup and store the result in the cache
+                    country = Tools.get_country_from_city(city) if city else None
+                    country_code = Tools.get_country_code_from_city(country) if country else None
+                    self.location_cache[city] = (country, country_code)  # Cache the result
                 
-                # Get country code if country is valid
-                country_code = Tools.get_country_code_from_city(country) if country else None
+                # Set the transformed values in the DataFrame
+                transformed_df.at[index, 'country'] = country if country else "Country not found"
                 transformed_df.at[index, 'country_code'] = country_code
 
-                # Format phone number if country code is available
+                # Format the phone number if a valid country code is available
                 if pd.notna(row['phone']) and country_code:
                     formatted_phone = Tools.format_phone_number(row['phone'], country_code)
                     transformed_df.at[index, 'phone'] = formatted_phone
 
-        # Replace NaN values with an empty string to ensure compatibility with JSON
+        # Replace NaN values with an empty string to ensure compatibility with JSON exports
         transformed_df = transformed_df.replace({pd.NA: "", np.nan: ""})
 
-        # Save the transformed data to CSV after all transformations
+        # Save the transformed data to a CSV file after all transformations
         transformed_df.to_csv("contacts_data_transformation.csv", index=False)
         print("Data saved to contacts_data_transformation.csv")
 
         return transformed_df
+
+
 
 
 
