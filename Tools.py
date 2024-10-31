@@ -1,6 +1,6 @@
 
 import re
-
+import numpy as np
 import time
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderUnavailable
